@@ -1,26 +1,13 @@
 local class = require 'middleclass'
 local vector = require 'vector'
+local HC = require 'HC'
 
 local Person = class('Person')
-local Physics = class('Physics')
 
-function Physics:initialize()
-end
-
-function Physics:isOverlap(personA, personB) 
-  if (personA:leftEdge() > personB:leftEdge() and personA:leftEdge() < personB:rightEdge() or personA:rightEdge() < personB:rightEdge() and personA:rightEdge() > personB:leftEdge()) and (personA:topEdge() > personB:topEdge() and personA:topEdge() < personB:bottomEdge() or personA:bottomEdge() < personB:bottomEdge() and personA:bottomEdge() > personB:topEdge()) then
-    return true
-  else
-    return false
-  end
-end
-
-
-function Person:initialize(x, y, r, g, b)
-  self.x = x
-  self.y = y
+function Person:initialize(x, y, r, g, b, collider)
   self.width = 100
   self.height = 100
+  self.collider = collider:rectangle(x - self.width * 0.5 , y - self.height * 0.5 , 100, 100)
   self.r = r
   self.g = g
   self.b = b
@@ -28,53 +15,38 @@ function Person:initialize(x, y, r, g, b)
 end
 
 function Person:getX()
-  return self.x
+  return collider.x + self.width * 0.5
 end
 
 function Person:getY()
-  return self.y
-end
-
-function Person:leftEdge()
-  return self.x - self.width * 0.5
-end
-
-function Person:rightEdge()
-  return self.x + self.width * 0.5
-end
-
-function Person:topEdge()
-  return self.y - self.width * 0.5
-end
-
-function Person:bottomEdge()
-  return self.y + self.width * 0.5
+  return collider.y + self.width * 0.5
 end
 
 function Person:move(moveVec, dt)
-  moveVec = moveVec:normalized()
-  self.x = self.x + moveVec.x * self.speed * dt
-  self.y = self.y + moveVec.y * self.speed * dt
+  self.collider:move(moveVec.x * self.speed * dt, moveVec.y * self.speed * dt)
 end
 
 function Person:draw()
+  drawX, drawY = self.collider:center()
+  drawX = drawX - self.width * 0.5
+  drawY = drawY - self.height * 0.5
   love.graphics.setColor(self.r, self.g, self.b, 255)
-  love.graphics.rectangle("fill", self.x - self.width * 0.5, self.y - self.width * 0.5, self.width, self.width)
+  love.graphics.rectangle("fill", drawX, drawY, self.width, self.width)
 
   love.graphics.setColor(255, 255, 255, 255)
-  love.graphics.rectangle("fill", self.x + 25 - self.width * 0.5, self.y + 25 - self.height * 0.5, 10, 10)
-  love.graphics.rectangle("fill", self.x + 75 - self.width * 0.5, self.y + 25 - self.height * 0.5, 10, 10)
-  love.graphics.rectangle("fill", self.x + 45 - self.width * 0.5, self.y + 45 - self.height * 0.5, 10, 10)
-  love.graphics.rectangle("fill", self.x + 20 - self.width * 0.5, self.y + 75 - self.height * 0.5, 60, 10)
+  love.graphics.rectangle("fill", drawX + 25, drawY + 25, 10, 10)
+  love.graphics.rectangle("fill", drawX + 75, drawY + 25, 10, 10)
+  love.graphics.rectangle("fill", drawX + 45, drawY + 45, 10, 10)
+  love.graphics.rectangle("fill", drawX + 20, drawY + 75, 60, 10)
 end
 
 function love.load()
   love.window.setMode(800, 800)
   fTime = love.timer.getTime()
+  collider = HC(100, onCollide)
 
-  physics = Physics:new()
-  redPerson = Person:new(400, 50, 255, 0, 0)
-  bluePerson = Person:new(400, 750, 0, 0, 255)
+  redPerson = Person:new(400, 50, 255, 0, 0, collider)
+  bluePerson = Person:new(400, 750, 0, 0, 255, collider)
 end
 
 function love.update(dt)
@@ -92,6 +64,7 @@ function love.update(dt)
     elseif love.keyboard.isDown("s") then
       redMove.y = 1
     end
+    redMove = redMove:normalized()
     redPerson:move(redMove, dt)
   end
 
@@ -108,16 +81,14 @@ function love.update(dt)
     elseif love.keyboard.isDown("down") then
       blueMove.y = 1
     end
+    blueMove = blueMove:normalized()
     bluePerson:move(blueMove, dt)
   end
-  end
+end
 
 function love.draw()
   love.graphics.setColor(99, 99, 255, 255)
   love.graphics.rectangle("fill", 0, 0, 800, 800)
   redPerson:draw()
   bluePerson:draw()
-  if physics:isOverlap(redPerson, bluePerson) then
-    love.graphics.print("overlapping!")
-  end
 end
