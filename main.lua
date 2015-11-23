@@ -14,12 +14,8 @@ function Person:initialize(x, y, r, g, b, collider)
   self.speed = 200
 end
 
-function Person:getX()
-  return collider.x + self.width * 0.5
-end
-
-function Person:getY()
-  return collider.y + self.width * 0.5
+function Person:getCollider()
+  return self.collider
 end
 
 function Person:move(moveVec, dt)
@@ -44,6 +40,10 @@ function love.load()
   love.window.setMode(800, 800)
   fTime = love.timer.getTime()
   collider = HC(100, onCollide)
+  leftScreenEdge = collider:rectangle(-1, 0, 1, 800)
+  rightScreenEdge = collider:rectangle(800, 0, 1, 800)
+  topScreenEdge = collider:rectangle(0, -1, 800, 1)
+  bottomScreenEdge = collider:rectangle(0, 800, 800, 1)
 
   redPerson = Person:new(400, 50, 255, 0, 0, collider)
   bluePerson = Person:new(400, 750, 0, 0, 255, collider)
@@ -66,6 +66,13 @@ function love.update(dt)
     end
     redMove = redMove:normalized()
     redPerson:move(redMove, dt)
+  end
+
+  redCollisions = HC.collisions(redPerson:getCollider())
+
+  for other, sep_vector in pairs(redCollisions) do
+    redPerson:getCollider():move(10, 200)
+    other:move(10, 15)
   end
 
   --blueMove
