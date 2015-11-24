@@ -1,96 +1,72 @@
 local class = require 'middleclass'
 local vector = require 'vector'
 local HC = require 'HC'
-
-local Person = class('Person')
-
-function Person:initialize(x, y, r, g, b, collider)
-  self.width = 100
-  self.height = 100
-  self.collider = collider:rectangle(x - self.width * 0.5 , y - self.height * 0.5 , 100, 100)
-  self.r = r
-  self.g = g
-  self.b = b
-  self.speed = 200
-end
-
-function Person:getCollider()
-  return self.collider
-end
-
-function Person:move(moveVec, dt)
-  self.collider:move(moveVec.x * self.speed * dt, moveVec.y * self.speed * dt)
-end
-
-function Person:draw()
-  drawX, drawY = self.collider:center()
-  drawX = drawX - self.width * 0.5
-  drawY = drawY - self.height * 0.5
-  love.graphics.setColor(self.r, self.g, self.b, 255)
-  love.graphics.rectangle("fill", drawX, drawY, self.width, self.width)
-
-  love.graphics.setColor(255, 255, 255, 255)
-  love.graphics.rectangle("fill", drawX + 25, drawY + 25, 10, 10)
-  love.graphics.rectangle("fill", drawX + 75, drawY + 25, 10, 10)
-  love.graphics.rectangle("fill", drawX + 45, drawY + 45, 10, 10)
-  love.graphics.rectangle("fill", drawX + 20, drawY + 75, 60, 10)
-end
+local Person = require 'person'
 
 function love.load()
   love.window.setMode(800, 800)
   fTime = love.timer.getTime()
-  collider = HC(100, onCollide)
-  leftScreenEdge = collider:rectangle(-1, 0, 1, 800)
-  rightScreenEdge = collider:rectangle(800, 0, 1, 800)
-  topScreenEdge = collider:rectangle(0, -1, 800, 1)
-  bottomScreenEdge = collider:rectangle(0, 800, 800, 1)
+  leftScreenEdge = HC.rectangle(-1, 0, 1, 800)
+  rightScreenEdge = HC.rectangle(800, 0, 1, 800)
+  bullets = { }
 
-  redPerson = Person:new(400, 50, 255, 0, 0, collider)
-  bluePerson = Person:new(400, 750, 0, 0, 255, collider)
+  redPerson = Person:new(400, 50, 255, 0, 0, HC, bullets, 'red')
+  bluePerson = Person:new(400, 750, 0, 0, 255, HC, bullets, 'blue')
 end
 
 function love.update(dt)
   -- moving
+  
+  -- redShoot
+  if love.keyboard.isDown("lctrl") then
+    redPerson:shoot(vector(0, 1))
+  end
+
   -- redMove
   redMove = vector(0, 0)
-  if love.keyboard.isDown("w", "a", "s", "d") then
+  if love.keyboard.isDown("a", "d") then
     if love.keyboard.isDown("a") then
       redMove.x = -1
     elseif love.keyboard.isDown("d") then
       redMove.x = 1
     end
-    if love.keyboard.isDown("w") then
-      redMove.y = -1
-    elseif love.keyboard.isDown("s") then
-      redMove.y = 1
-    end
     redMove = redMove:normalized()
     redPerson:move(redMove, dt)
   end
-
-  redCollisions = HC.collisions(redPerson:getCollider())
-
-  for other, sep_vector in pairs(redCollisions) do
-    redPerson:getCollider():move(10, 200)
-    other:move(10, 15)
+  
+  -- blueShoot
+  if love.keyboard.isDown("rctrl") then
+    bluePerson:shoot(vector(0, -1))
   end
-
+  
   --blueMove
   blueMove = vector(0, 0)
-  if love.keyboard.isDown("up", "left", "down", "right") then
+  if love.keyboard.isDown("left", "right") then
     if love.keyboard.isDown("left") then
       blueMove.x = -1
     elseif love.keyboard.isDown("right") then
       blueMove.x = 1
     end
-    if love.keyboard.isDown("up") then
-      blueMove.y = -1
-    elseif love.keyboard.isDown("down") then
-      blueMove.y = 1
-    end
     blueMove = blueMove:normalized()
     bluePerson:move(blueMove, dt)
   end
+
+  -- resolve collisions
+
+  for shape, delta in pairs(HC.collisions(leftScreenEdge)) do
+    shape:move(-delta.x, -delta.y)
+  end
+
+  for shape, delta in pairs(HC.collisions(rightScreenEdge)) do
+    shape:move(-delta.x, -delta.y)
+  end
+
+  -- update bullets
+
+  for i, bullet in pairs(bullets) do
+    bullet:update(dt)
+  end
+
 end
 
 function love.draw()
@@ -98,4 +74,7 @@ function love.draw()
   love.graphics.rectangle("fill", 0, 0, 800, 800)
   redPerson:draw()
   bluePerson:draw()
+  for i, bullet in pairs(bullets) do
+    bullet:draw()
+  end
 end
