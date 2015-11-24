@@ -10,9 +10,10 @@ function Bullet:initialize(x, y, direction, collider, playerTag)
   self.r = 0
   self.g = 255
   self.b = 0
-  self.speed = 400
+  self.speed = 1000
   self.direction = direction
   self.playerTag = playerTag
+  self.shape.tag = playerTag
 end
 
 function Bullet:getShape()

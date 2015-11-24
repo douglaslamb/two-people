@@ -5,10 +5,20 @@ local Person = require 'person'
 
 function love.load()
   love.window.setMode(800, 800)
-  fTime = love.timer.getTime()
+  redShotTime = love.timer.getTime()
+  blueShotTime = redShotTime
   leftScreenEdge = HC.rectangle(-1, 0, 1, 800)
+  leftScreenEdge.tag = "edge"
   rightScreenEdge = HC.rectangle(800, 0, 1, 800)
+  rightScreenEdge.tag = "edge"
+  shotInterval = 1
   bullets = { }
+  gameOver = false
+  gameOverTimer = 5
+  winText = ""
+
+  redHealth = 100
+  blueHealth = 100
 
   redPerson = Person:new(400, 50, 255, 0, 0, HC, bullets, 'red')
   bluePerson = Person:new(400, 750, 0, 0, 255, HC, bullets, 'blue')
@@ -18,55 +28,96 @@ function love.update(dt)
   -- moving
   
   -- redShoot
-  if love.keyboard.isDown("lctrl") then
-    redPerson:shoot(vector(0, 1))
-  end
-
-  -- redMove
-  redMove = vector(0, 0)
-  if love.keyboard.isDown("a", "d") then
-    if love.keyboard.isDown("a") then
-      redMove.x = -1
-    elseif love.keyboard.isDown("d") then
-      redMove.x = 1
+  if not gameOver then
+    if love.keyboard.isDown("v") and love.timer.getTime() - redShotTime > shotInterval then
+      redPerson:shoot(vector(0, 1))
+      redShotTime = love.timer.getTime()
     end
-    redMove = redMove:normalized()
-    redPerson:move(redMove, dt)
-  end
-  
-  -- blueShoot
-  if love.keyboard.isDown("rctrl") then
-    bluePerson:shoot(vector(0, -1))
-  end
-  
-  --blueMove
-  blueMove = vector(0, 0)
-  if love.keyboard.isDown("left", "right") then
-    if love.keyboard.isDown("left") then
-      blueMove.x = -1
-    elseif love.keyboard.isDown("right") then
-      blueMove.x = 1
+
+    -- redMove
+    redMove = vector(0, 0)
+    if love.keyboard.isDown("a", "d") then
+      if love.keyboard.isDown("a") then
+        redMove.x = -1
+      elseif love.keyboard.isDown("d") then
+        redMove.x = 1
+      end
+      redMove = redMove:normalized()
+      redPerson:move(redMove, dt)
     end
-    blueMove = blueMove:normalized()
-    bluePerson:move(blueMove, dt)
+    
+    -- blueShoot
+    if love.keyboard.isDown("rshift") and love.timer.getTime() - blueShotTime > shotInterval then
+      bluePerson:shoot(vector(0, -1))
+      blueShotTime = love.timer.getTime()
+    end
+    
+    --blueMove
+    blueMove = vector(0, 0)
+    if love.keyboard.isDown("left", "right") then
+      if love.keyboard.isDown("left") then
+        blueMove.x = -1
+      elseif love.keyboard.isDown("right") then
+        blueMove.x = 1
+      end
+      blueMove = blueMove:normalized()
+      bluePerson:move(blueMove, dt)
+    end
+
+    -- resolve collisions
+
+    for shape, delta in pairs(HC.collisions(leftScreenEdge)) do
+      shape:move(-delta.x, -delta.y)
+    end
+
+    for shape, delta in pairs(HC.collisions(rightScreenEdge)) do
+      shape:move(-delta.x, -delta.y)
+    end
+
+    -- update bullets
+
+    for i, bullet in pairs(bullets) do
+      x, y = bullet:getShape():center()
+      if y < 0 or y > 800 then
+        HC.remove(bullet:getShape())
+        bullets[i] = nil
+      else
+        bullet:update(dt)
+      end
+    end
+
+    -- resolve bullet hits
+    
+    for shape, delta in pairs(HC.collisions(redPerson:getShape())) do
+      if shape.tag == 'blue' then
+        shape:moveTo(400, -100)
+        redHealth = redHealth - 10
+      end
+    end
+
+    for shape, delta in pairs(HC.collisions(bluePerson:getShape())) do
+      if shape.tag == 'red' then
+        shape:moveTo(400, -100)
+        blueHealth = blueHealth - 10
+      end
+    end
+
+    -- check for win
+
+    if redHealth < 10 then
+      gameOver = true
+      winText = "Blue Wins!"
+      gameOverTimer = love.timer.getTime() + gameOverTimer
+    elseif blueHealth < 10 then
+      gameOver = true
+      winText = "Red Wins!"
+      gameOverTimer = love.timer.getTime() + gameOverTimer
+    end
+  else
+    if love.timer.getTime() > gameOverTimer then
+      love.event.push('quit')
+    end
   end
-
-  -- resolve collisions
-
-  for shape, delta in pairs(HC.collisions(leftScreenEdge)) do
-    shape:move(-delta.x, -delta.y)
-  end
-
-  for shape, delta in pairs(HC.collisions(rightScreenEdge)) do
-    shape:move(-delta.x, -delta.y)
-  end
-
-  -- update bullets
-
-  for i, bullet in pairs(bullets) do
-    bullet:update(dt)
-  end
-
 end
 
 function love.draw()
@@ -77,4 +128,6 @@ function love.draw()
   for i, bullet in pairs(bullets) do
     bullet:draw()
   end
+  love.graphics.printf("Red: " .. redHealth .. "\n" .. "Blue: " .. blueHealth, 0, 0, 125, "left")
+  love.graphics.print(winText, 400, 400)
 end
