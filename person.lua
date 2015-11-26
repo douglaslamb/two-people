@@ -1,7 +1,7 @@
 local class = require 'middleclass'
 local HC = require 'HC'
 local vector = require 'vector'
-local Bullet = require('Bullet')
+local Bullet = require('bullet')
 local Person = class('Person')
 
 function Person:initialize(x, y, r, g, b, collider, bullets, playerTag)

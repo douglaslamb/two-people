@@ -106,15 +106,17 @@ function love.update(dt)
 
     if redHealth < 10 then
       gameOver = true
-      winText = "Blue Wins!"
+      winText = "Blue Wins!" .. "\n" .. "Play again? Y/N"
       gameOverTimer = love.timer.getTime() + gameOverTimer
     elseif blueHealth < 10 then
       gameOver = true
-      winText = "Red Wins!"
+      winText = "Red Wins!" .. "\n" .. "Play again? Y/N"
       gameOverTimer = love.timer.getTime() + gameOverTimer
     end
   else
-    if love.timer.getTime() > gameOverTimer then
+    if love.keyboard.isDown("y") then 
+      love.load()
+    elseif love.keyboard.isDown("n") then
       love.event.push('quit')
     end
   end
@@ -128,6 +130,7 @@ function love.draw()
   for i, bullet in pairs(bullets) do
     bullet:draw()
   end
+  love.graphics.setColor(255, 255, 255, 255)
   love.graphics.printf("Red: " .. redHealth .. "\n" .. "Blue: " .. blueHealth, 0, 0, 125, "left")
   love.graphics.print(winText, 400, 400)
 end
