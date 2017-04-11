@@ -7,13 +7,19 @@ A competitive two-player game using one keyboard. The first player to hit the ot
 ## How to play
 
 Red:
+
 a - left
+
 d - right
+
 v - shoot
 
 Blue:
+
 left - left
+
 right - right
+
 rshift - shoot 
 
 ## How to run the game
