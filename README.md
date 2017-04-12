@@ -25,7 +25,7 @@ rshift - shoot
 ## How to run the game
 
 1. Install [Löve] (https://love2d.org/wiki/Getting_Started)
-2. Clone Two People `git clone https://github.com/douglaslamb/two-people`
+2. Clone Two People `git clone --recursive https://github.com/douglaslamb/two-people` You need to add `--recursive` because this repo has a git submodule, HC. If you do not use `--recursive` it will not pull down HC and the game will not work.
 3. If you are on Mac or Win drag and drop the directory you just cloned onto the Löve application bundle. E.g., on Mac drag and drop the two-people directory onto love.app in ~/Applications . If you are on Linux simply cd to the two-people directory you just cloned and `love .` https://love2d.org/wiki/Getting_Started 
 
 Or download the exectuables:
